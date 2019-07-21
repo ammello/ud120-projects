@@ -81,6 +81,8 @@ t0 = time()
 pred_rnd = rnd_clf.predict(features_test)
 print("tempo de predição:", round(time()-t0, 3), "s")
 
+#print(rnd_clf.predict_proba(features_test))[0:10]
+
 acc = accuracy_score(labels_test, pred_rnd)
 print(acc)
 
