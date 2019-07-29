@@ -39,15 +39,43 @@ def Draw(pred, features, poi, mark_poi=False, name="image.png", f1_name="feature
 
 
 ### load in the dict of dicts containing all the data on each person in the dataset
-data_dict = pickle.load( open("../final_project/final_project_dataset.pkl", "r") )
+data_handler = open("../final_project/final_project_dataset_unix.pkl", "rb")
+data_dict = pickle.load(data_handler)
 ### there's an outlier--remove it! 
 data_dict.pop("TOTAL", 0)
 
+# max e min deconsiderando os NaN
+from math import isnan
+clean_dict = {k: v for k, v in data_dict.items() if not v['exercised_stock_options']=='NaN' }
+print(max(item["exercised_stock_options"] for k, item in clean_dict.items()))
+print(min(item["exercised_stock_options"] for k, item in clean_dict.items()))
+
+ex_stok = [min(item["exercised_stock_options"] for k, item in clean_dict.items()),1000000.0,max(item["exercised_stock_options"] for k, item in clean_dict.items())]
+
+clean_dict = {k: v for k, v in data_dict.items() if not v['salary']=='NaN' }
+print(max(item["salary"] for k, item in clean_dict.items()))
+print(min(item["salary"] for k, item in clean_dict.items()))
+
+
+salary = [min(item["salary"] for k, item in clean_dict.items()),200000.0,max(item["salary"] for k, item in clean_dict.items())]
+
+salary = numpy.array([[e] for e in salary])
+ex_stok = numpy.array([[e] for e in ex_stok])
+
+from sklearn.preprocessing import MinMaxScaler
+scaler_salary = MinMaxScaler()
+scaler_stok = MinMaxScaler()
+
+print(scaler_salary.fit_transform(salary))
+print(scaler_stok.fit_transform(ex_stok))
+
+data_dict = clean_dict
 
 ### the input features we want to use 
 ### can be any key in the person-level dictionary (salary, director_fees, etc.) 
 feature_1 = "salary"
 feature_2 = "exercised_stock_options"
+#feature_3 = "total_payments"
 poi  = "poi"
 features_list = [poi, feature_1, feature_2]
 data = featureFormat(data_dict, features_list )
@@ -64,8 +92,9 @@ plt.show()
 
 ### cluster here; create predictions of the cluster labels
 ### for the data and store them to a list called pred
-
-
+from sklearn.cluster import KMeans
+kmeans = KMeans(n_clusters=2, random_state=0).fit(finance_features)
+pred = kmeans.predict(finance_features)
 
 
 ### rename the "name" parameter when you change the number of features
@@ -73,4 +102,4 @@ plt.show()
 try:
     Draw(pred, finance_features, poi, mark_poi=False, name="clusters.pdf", f1_name=feature_1, f2_name=feature_2)
 except NameError:
-    print "no predictions object named pred found, no clusters to plot"
+    print("no predictions object named pred found, no clusters to plot")
